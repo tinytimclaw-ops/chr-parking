@@ -205,7 +205,7 @@ async function loadDestinations() {
 
   try {
     const flightDate = document.getElementById("outDate").value;
-    const apiUrl = `https://api.holidayextras.com/v1/destinations?location=${departCode}&departDate=${flightDate}`;
+    const apiUrl = `https://flight.dock-yard.io/destinations?location=${departCode}&departDate=${flightDate}`;
     const response = await fetch(apiUrl);
 
     if (!response.ok) {
@@ -271,7 +271,7 @@ async function loadFlightsForDestination(airportCodes) {
   try {
     const flightDate = document.getElementById("outDate").value;
     const destination = airportCodes.join(",");
-    const apiUrl = `https://api.holidayextras.com/v1/searchDayFlights?location=${departCode}&destination=${destination}&departDate=${flightDate}&fullResults=true`;
+    const apiUrl = `https://flight.dock-yard.io/searchDayFlights?location=${departCode}&destination=${destination}&departDate=${flightDate}&fullResults=true`;
     const response = await fetch(apiUrl);
 
     if (!response.ok) {
