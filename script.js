@@ -277,6 +277,19 @@ function selectFlightOnPage(flightData) {
   showPage(7);
 }
 
+function skipFlight() {
+  selectedFlight = null;
+  selectedDestination = null;
+  updateSummary();
+  showPage(7);
+}
+
+function skipFromFlights() {
+  selectedFlight = null;
+  updateSummary();
+  showPage(7);
+}
+
 // Summary
 function updateSummary() {
   const outDate = document.getElementById("outDate").value;
