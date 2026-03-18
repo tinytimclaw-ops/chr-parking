@@ -141,6 +141,11 @@ function nextPage(page) {
     }
   }
 
+  // Load destinations when entering page 5
+  if (page === 5) {
+    loadDestinationsOnPage();
+  }
+
   showPage(page);
 }
 
@@ -148,38 +153,16 @@ function prevPage(page) {
   showPage(page);
 }
 
-// Flight selection
-function skipFlight() {
-  selectedFlight = null;
-  updateSummary();
-  showPage(6);
-}
-
-function selectFlight() {
+// Destinations on page 5
+async function loadDestinationsOnPage() {
   if (!departCode) {
-    alert("Location parameter required for flight lookup. Continuing without flight...");
-    skipFlight();
+    document.getElementById("destinationList5").innerHTML =
+      '<p style="text-align: center; color: #666;">Location parameter required. Please add ?Location=LHR (or other airport code) to the URL.</p>';
     return;
   }
 
-  const modal = document.getElementById("flightModal");
-  modal.classList.add("active");
-  loadDestinations();
-}
-
-function closeFlightModal() {
-  const modal = document.getElementById("flightModal");
-  modal.classList.remove("active");
-
-  // Reset to destination step
-  document.getElementById("destinationStep").classList.add("active");
-  document.getElementById("flightStep").classList.remove("active");
-}
-
-// Destinations API
-async function loadDestinations() {
-  const loading = document.getElementById("destinationLoading");
-  const list = document.getElementById("destinationList");
+  const loading = document.getElementById("destinationLoading5");
+  const list = document.getElementById("destinationList5");
 
   loading.style.display = "block";
   list.innerHTML = "";
@@ -194,7 +177,7 @@ async function loadDestinations() {
     }
 
     availableDestinations = await response.json();
-    renderDestinations();
+    renderDestinationsOnPage();
   } catch (error) {
     console.error("Destinations lookup error:", error);
     list.innerHTML = '<p style="text-align: center; color: #666;">Unable to load destinations.</p>';
@@ -203,8 +186,8 @@ async function loadDestinations() {
   }
 }
 
-function renderDestinations() {
-  const list = document.getElementById("destinationList");
+function renderDestinationsOnPage() {
+  const list = document.getElementById("destinationList5");
 
   if (!availableDestinations || availableDestinations.length === 0) {
     list.innerHTML = '<p style="text-align: center; color: #666;">No destinations found for this date.</p>';
@@ -213,7 +196,7 @@ function renderDestinations() {
 
   list.innerHTML = availableDestinations
     .map((dest, index) => `
-      <div class="destination-card" onclick="selectDestination(${index})">
+      <div class="destination-card" onclick="selectDestinationOnPage(${index})">
         <div class="destination-city">${dest.city || ""}</div>
         <div class="destination-country">${dest.country || ""}</div>
         <div class="destination-count">${dest.count || 0} flight${dest.count === 1 ? "" : "s"}</div>
@@ -222,29 +205,19 @@ function renderDestinations() {
     .join("");
 }
 
-function selectDestination(index) {
+function selectDestinationOnPage(index) {
   selectedDestination = availableDestinations[index];
-
-  // Switch to flight step
-  document.getElementById("destinationStep").classList.remove("active");
-  document.getElementById("flightStep").classList.add("active");
-
-  document.getElementById("flightStepTitle").textContent = `Flights to ${selectedDestination.city}`;
-
-  loadFlightsForDestination(selectedDestination.airports);
+  document.getElementById("flightSubtitle6").textContent = `Flights to ${selectedDestination.city}`;
+  loadFlightsOnPage(selectedDestination.airports);
+  showPage(6);
 }
 
-function backToDestinations() {
-  document.getElementById("flightStep").classList.remove("active");
-  document.getElementById("destinationStep").classList.add("active");
-}
-
-// Flights API
-async function loadFlightsForDestination(airportCodes) {
+// Flights on page 6
+async function loadFlightsOnPage(airportCodes) {
   if (!airportCodes || airportCodes.length === 0) return;
 
-  const loading = document.getElementById("flightLoading");
-  const list = document.getElementById("flightList");
+  const loading = document.getElementById("flightLoading6");
+  const list = document.getElementById("flightList6");
 
   loading.style.display = "block";
   list.innerHTML = "";
@@ -260,7 +233,7 @@ async function loadFlightsForDestination(airportCodes) {
     }
 
     const flights = await response.json();
-    renderFlights(flights);
+    renderFlightsOnPage(flights);
   } catch (error) {
     console.error("Flight lookup error:", error);
     list.innerHTML = '<p style="text-align: center; color: #666;">Unable to load flights.</p>';
@@ -269,8 +242,8 @@ async function loadFlightsForDestination(airportCodes) {
   }
 }
 
-function renderFlights(flights) {
-  const list = document.getElementById("flightList");
+function renderFlightsOnPage(flights) {
+  const list = document.getElementById("flightList6");
 
   if (!flights || flights.length === 0) {
     list.innerHTML = '<p style="text-align: center; color: #666;">No flights found for this route and date.</p>';
@@ -288,7 +261,7 @@ function renderFlights(flights) {
       const arrIata = (f.arrival && f.arrival.airport_iata) || "";
 
       return `
-        <div class="flight-card" onclick='chooseFlightData(${JSON.stringify(f).replace(/'/g, "&#39;")})'>
+        <div class="flight-card" onclick='selectFlightOnPage(${JSON.stringify(f).replace(/'/g, "&#39;")})'>
           <div class="flight-code">${code}</div>
           ${airline ? `<div class="flight-airline">${airline}</div>` : ""}
           <div class="flight-times">${depIata} ${depTime} → ${arrIata} ${arrTime}</div>
@@ -298,11 +271,10 @@ function renderFlights(flights) {
     .join("");
 }
 
-function chooseFlightData(flightData) {
+function selectFlightOnPage(flightData) {
   selectedFlight = flightData;
-  closeFlightModal();
   updateSummary();
-  showPage(6);
+  showPage(7);
 }
 
 // Summary
@@ -329,16 +301,14 @@ function updateSummary() {
   document.getElementById("summaryOutDate").textContent = `${outDateFormatted} at ${outTime}`;
   document.getElementById("summaryInDate").textContent = `${inDateFormatted} at ${inTime}`;
 
-  const flightRow = document.getElementById("summaryFlightRow");
   const flightValue = document.getElementById("summaryFlight");
 
   if (selectedFlight) {
     const code = (selectedFlight.flight && selectedFlight.flight.code) || "";
     const airline = (selectedFlight.flight && selectedFlight.flight.carrier && selectedFlight.flight.carrier.name) || "";
     flightValue.textContent = airline ? `${code} (${airline})` : code;
-    flightRow.style.display = "flex";
   } else {
-    flightRow.style.display = "none";
+    flightValue.textContent = "Not selected";
   }
 }
 
