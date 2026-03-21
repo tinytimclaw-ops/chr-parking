@@ -1,6 +1,6 @@
-// CHR Crazy Parking - Interactive Data Collection
+// CHR Parking Landing Page - Individual Pages
 
-// CHR Brand Map
+// CHR brand mapping
 const CHR_BRANDS = {
   LHR: { name: "Heathrow Parking", slug: "heathrowparking" },
   LGW: { name: "Gatwick Parking", slug: "gatwickparking" },
@@ -11,293 +11,350 @@ const CHR_BRANDS = {
   EDI: { name: "Edinburgh Parking", slug: "edinburghairport" },
   BRS: { name: "Bristol Parking", slug: "bristolairport" },
   NCL: { name: "Newcastle Parking", slug: "newcastleairport" },
-  LBA: { name: "Leeds Bradford Parking", slug: "leedsbradfordairport" }
+  LBA: { name: "Leeds Bradford Parking", slug: "leedsbradfordairport" },
 };
 
 const DEFAULT_BRAND = { name: "Airport Parking", slug: "heathrowparking" };
 
 // State
-const state = {
-  currentStep: 1,
-  outDate: null,
-  outTime: "06%3A00",
-  inDate: null,
-  inTime: "12%3A00",
-  dates: [],
-  returnDates: [],
-  currentDateIndex: 0,
-  currentReturnDateIndex: 0
-};
+let currentPage = 1;
+let selectedDestination = null;
+let selectedFlight = null;
+let availableDestinations = [];
+let departCode = "";
+let brand = DEFAULT_BRAND;
+let inDateManuallyChanged = false;
 
-// Date helpers
-function datePlus(days) {
-  const d = new Date();
-  d.setDate(d.getDate() + days);
-  return d;
-}
+// Initialize on page load
+document.addEventListener("DOMContentLoaded", () => {
+  initializeBranding();
+  initializeDates();
+  showPage(1);
+});
 
-function formatDate(date) {
-  return date.toISOString().split('T')[0];
-}
-
-function getDayName(date) {
-  return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getDay()];
-}
-
-function getMonthName(date) {
-  return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][date.getMonth()];
-}
-
-// Initialize
-document.addEventListener('DOMContentLoaded', () => {
-  // Get URL params
+// Branding setup
+function initializeBranding() {
   const urlParams = new URLSearchParams(window.location.search);
-  const depart = (urlParams.get("Location") || urlParams.get("location") || "").toUpperCase();
-  const brand = CHR_BRANDS[depart] || DEFAULT_BRAND;
+  departCode = (urlParams.get("Location") || urlParams.get("location") || "").toUpperCase();
+  brand = CHR_BRANDS[departCode] || DEFAULT_BRAND;
 
-  // Set brand
+  // Set brand name
+  document.getElementById("brandName").textContent = brand.name;
+  document.getElementById("footerBrand").textContent = brand.name;
   document.title = brand.name;
-  document.getElementById('bannerHeadline').textContent = `Park your car in the future at ${brand.name}!`;
-  document.getElementById('footerBrand').textContent = brand.name;
 
-  const logoEl = document.getElementById('brandLogo');
-  logoEl.src = `https://s3.amazonaws.com/theme-media/img/brand/${brand.slug}-icon.png`;
+  // Set logo
+  const logoUrl = `https://s3.amazonaws.com/theme-media/img/brand/${brand.slug}-icon.png`;
+  const logoEl = document.getElementById("brandLogo");
+  logoEl.src = logoUrl;
   logoEl.alt = brand.name;
   logoEl.onerror = () => {
     logoEl.src = "https://s3.amazonaws.com/theme-media/img/brand/heathrowparking-icon.png";
   };
+}
 
-  // Store brand for later
-  window.brand = brand;
-  window.depart = depart || "LGW";
+// Date calculation helpers
+function datePlus(days) {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d.toISOString().split("T")[0];
+}
 
-  // Generate dates (30 days starting tomorrow)
-  for (let i = 1; i <= 30; i++) {
-    state.dates.push(datePlus(i));
+function defaultInFromOut(outDateStr) {
+  const d = new Date(outDateStr);
+  d.setDate(d.getDate() + 8);
+  return d.toISOString().split("T")[0];
+}
+
+function initializeDates() {
+  const outDateInput = document.getElementById("outDate");
+  const inDateInput = document.getElementById("inDate");
+
+  outDateInput.value = datePlus(1);
+  inDateInput.value = datePlus(9);
+
+  // Set min dates
+  outDateInput.min = new Date().toISOString().split("T")[0];
+  inDateInput.min = datePlus(1);
+
+  // Track manual changes
+  inDateInput.addEventListener("change", () => {
+    inDateManuallyChanged = true;
+  });
+
+  // Recalculate inDate when outDate changes (unless manually changed)
+  outDateInput.addEventListener("change", () => {
+    if (!inDateManuallyChanged) {
+      inDateInput.value = defaultInFromOut(outDateInput.value);
+    }
+    // Update inDate minimum
+    inDateInput.min = outDateInput.value;
+  });
+}
+
+// Page navigation
+function showPage(page) {
+  // Hide all panels
+  document.querySelectorAll(".page-panel").forEach(panel => {
+    panel.classList.remove("active");
+  });
+
+  // Show target panel
+  document.getElementById(`page${page}`).classList.add("active");
+
+  // Update progress bar
+  document.querySelectorAll(".progress-step").forEach((el, index) => {
+    el.classList.remove("active", "completed");
+    if (index + 1 < page) {
+      el.classList.add("completed");
+    } else if (index + 1 === page) {
+      el.classList.add("active");
+    }
+  });
+
+  // Scroll to top
+  window.scrollTo({ top: 0, behavior: "smooth" });
+
+  currentPage = page;
+}
+
+function nextPage(page) {
+  // Validate before proceeding
+  if (currentPage === 1) {
+    const outDate = document.getElementById("outDate").value;
+    if (!outDate) {
+      alert("Please select a drop-off date");
+      return;
+    }
   }
 
-  // Initialize Step 1: Date Cards
-  initDateCards();
-
-  // Step 2: Out Time Slider
-  initTimeSlider('outTimeThumb', 'outTimeValue', (time) => {
-    state.outTime = time;
-  }, 6); // Default 06:00
-
-  document.getElementById('confirmOutTime').addEventListener('click', () => {
-    // Generate return dates (starting from selected outDate + 1)
-    const selectedOutDate = new Date(state.outDate);
-    state.returnDates = [];
-    for (let i = 1; i <= 30; i++) {
-      const d = new Date(selectedOutDate);
-      d.setDate(d.getDate() + i);
-      state.returnDates.push(d);
+  if (currentPage === 3) {
+    const inDate = document.getElementById("inDate").value;
+    const outDate = document.getElementById("outDate").value;
+    if (!inDate) {
+      alert("Please select a collection date");
+      return;
     }
-    state.currentReturnDateIndex = 7; // Default to 8 days later
-    state.inDate = formatDate(state.returnDates[7]);
-
-    goToStep(3);
-    initReturnDateCards();
-  });
-
-  // Step 3: Return Date Cards (initialized after step 2)
-
-  // Step 4: In Time Slider
-  initTimeSlider('inTimeThumb', 'inTimeValue', (time) => {
-    state.inTime = time;
-  }, 12); // Default 12:00
-
-  document.getElementById('confirmInTime').addEventListener('click', () => {
-    goToStep(5);
-    showChatSummary();
-  });
-
-  // Step 5: Launch Search
-  document.getElementById('launchSearch').addEventListener('click', () => {
-    launchSearch();
-  });
-});
-
-// Date Cards Swipe Interface
-function initDateCards() {
-  const container = document.getElementById('dateCards');
-  renderDateCards(container, state.dates, state.currentDateIndex);
-
-  document.getElementById('swipeLeftBtn').addEventListener('click', () => {
-    if (state.currentDateIndex > 0) {
-      state.currentDateIndex--;
-      renderDateCards(container, state.dates, state.currentDateIndex);
+    if (new Date(inDate) < new Date(outDate)) {
+      alert("Collection date must be on or after drop-off date");
+      return;
     }
-  });
-
-  document.getElementById('swipeRightBtn').addEventListener('click', () => {
-    if (state.currentDateIndex < state.dates.length - 1) {
-      state.currentDateIndex++;
-      renderDateCards(container, state.dates, state.currentDateIndex);
-    }
-  });
-
-  // Tap to select
-  container.addEventListener('click', (e) => {
-    if (e.target.closest('.date-card.top')) {
-      state.outDate = formatDate(state.dates[state.currentDateIndex]);
-      document.getElementById('dateChoice').textContent = `✅ ${state.outDate} selected!`;
-      setTimeout(() => goToStep(2), 800);
-    }
-  });
-}
-
-function initReturnDateCards() {
-  const container = document.getElementById('returnDateCards');
-  renderDateCards(container, state.returnDates, state.currentReturnDateIndex);
-
-  document.getElementById('returnSwipeLeftBtn').addEventListener('click', () => {
-    if (state.currentReturnDateIndex > 0) {
-      state.currentReturnDateIndex--;
-      renderDateCards(container, state.returnDates, state.currentReturnDateIndex);
-    }
-  });
-
-  document.getElementById('returnSwipeRightBtn').addEventListener('click', () => {
-    if (state.currentReturnDateIndex < state.returnDates.length - 1) {
-      state.currentReturnDateIndex++;
-      renderDateCards(container, state.returnDates, state.currentReturnDateIndex);
-    }
-  });
-
-  container.addEventListener('click', (e) => {
-    if (e.target.closest('.date-card.top')) {
-      state.inDate = formatDate(state.returnDates[state.currentReturnDateIndex]);
-      document.getElementById('returnDateChoice').textContent = `✅ ${state.inDate} selected!`;
-      setTimeout(() => goToStep(4), 800);
-    }
-  });
-}
-
-function renderDateCards(container, dates, currentIndex) {
-  container.innerHTML = '';
-
-  // Show current and next card
-  const indices = [currentIndex, currentIndex + 1].filter(i => i < dates.length);
-
-  indices.forEach((index, i) => {
-    const date = dates[index];
-    const card = document.createElement('div');
-    card.className = `date-card ${i === 0 ? 'top' : 'back'}`;
-    card.innerHTML = `
-      <div class="date-card-day">${getDayName(date)}</div>
-      <div class="date-card-date">${date.getDate()}</div>
-      <div class="date-card-month">${getMonthName(date)} ${date.getFullYear()}</div>
-    `;
-    container.appendChild(card);
-  });
-}
-
-// Time Slider
-function initTimeSlider(thumbId, valueId, onChange, defaultHour) {
-  const thumb = document.getElementById(thumbId);
-  const valueEl = document.getElementById(valueId);
-  let isDragging = false;
-  let currentHour = defaultHour;
-
-  function updateTime(hour) {
-    currentHour = Math.max(0, Math.min(23, hour));
-    const timeString = `${currentHour.toString().padStart(2, '0')}:00`;
-    const timeEncoded = `${currentHour.toString().padStart(2, '0')}%3A00`;
-    valueEl.textContent = timeString;
-    onChange(timeEncoded);
-
-    // Update thumb position
-    const percentage = (currentHour / 23) * 100;
-    thumb.style.left = `${percentage}%`;
   }
 
-  updateTime(currentHour);
+  // Load destinations when entering page 5
+  if (page === 5) {
+    loadDestinationsOnPage();
+  }
 
-  thumb.addEventListener('mousedown', () => isDragging = true);
-  thumb.addEventListener('touchstart', () => isDragging = true);
-
-  document.addEventListener('mousemove', (e) => {
-    if (!isDragging) return;
-    const track = thumb.parentElement;
-    const rect = track.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100));
-    const hour = Math.round((percentage / 100) * 23);
-    updateTime(hour);
-  });
-
-  document.addEventListener('touchmove', (e) => {
-    if (!isDragging) return;
-    const track = thumb.parentElement;
-    const rect = track.getBoundingClientRect();
-    const x = e.touches[0].clientX - rect.left;
-    const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100));
-    const hour = Math.round((percentage / 100) * 23);
-    updateTime(hour);
-  });
-
-  document.addEventListener('mouseup', () => isDragging = false);
-  document.addEventListener('touchend', () => isDragging = false);
+  showPage(page);
 }
 
-// Chat Summary
-function showChatSummary() {
-  const outTimeDecoded = state.outTime.replace('%3A', ':');
-  const inTimeDecoded = state.inTime.replace('%3A', ':');
-
-  const summaryText = `
-    📅 Drop-off: <strong>${state.outDate}</strong> at <strong>${outTimeDecoded}</strong><br>
-    📅 Return: <strong>${state.inDate}</strong> at <strong>${inTimeDecoded}</strong><br><br>
-    Ready to find you the best parking deals!
-  `;
-
-  document.getElementById('summaryText').innerHTML = summaryText;
+function prevPage(page) {
+  showPage(page);
 }
 
-// Navigation
-function goToStep(step) {
-  state.currentStep = step;
+// Destinations on page 5
+async function loadDestinationsOnPage() {
+  if (!departCode) {
+    document.getElementById("destinationList5").innerHTML =
+      '<p style="text-align: center; color: #666;">Location parameter required. Please add ?Location=LHR (or other airport code) to the URL.</p>';
+    return;
+  }
 
-  // Hide all sections
-  document.querySelectorAll('.step-section').forEach(el => el.classList.remove('active'));
+  const loading = document.getElementById("destinationLoading5");
+  const list = document.getElementById("destinationList5");
 
-  // Show current section
-  document.getElementById(`step${step}`).classList.add('active');
+  loading.style.display = "block";
+  list.innerHTML = "";
 
-  // Update progress dots
-  document.querySelectorAll('.dot').forEach((dot, i) => {
-    dot.classList.toggle('active', i + 1 === step);
+  try {
+    const flightDate = document.getElementById("outDate").value;
+    const apiUrl = `https://flight.dock-yard.io/destinations?location=${departCode}&departDate=${flightDate}`;
+    const response = await fetch(apiUrl);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    availableDestinations = await response.json();
+    renderDestinationsOnPage();
+  } catch (error) {
+    console.error("Destinations lookup error:", error);
+    list.innerHTML = '<p style="text-align: center; color: #666;">Unable to load destinations.</p>';
+  } finally {
+    loading.style.display = "none";
+  }
+}
+
+function renderDestinationsOnPage() {
+  const list = document.getElementById("destinationList5");
+
+  if (!availableDestinations || availableDestinations.length === 0) {
+    list.innerHTML = '<p style="text-align: center; color: #666;">No destinations found for this date.</p>';
+    return;
+  }
+
+  list.innerHTML = availableDestinations
+    .map((dest, index) => `
+      <div class="destination-card" onclick="selectDestinationOnPage(${index})">
+        <div class="destination-city">${dest.city || ""}</div>
+        <div class="destination-country">${dest.country || ""}</div>
+        <div class="destination-count">${dest.count || 0} flight${dest.count === 1 ? "" : "s"}</div>
+      </div>
+    `)
+    .join("");
+}
+
+function selectDestinationOnPage(index) {
+  selectedDestination = availableDestinations[index];
+  document.getElementById("flightSubtitle6").textContent = `Flights to ${selectedDestination.city}`;
+  loadFlightsOnPage(selectedDestination.airports);
+  showPage(6);
+}
+
+// Flights on page 6
+async function loadFlightsOnPage(airportCodes) {
+  if (!airportCodes || airportCodes.length === 0) return;
+
+  const loading = document.getElementById("flightLoading6");
+  const list = document.getElementById("flightList6");
+
+  loading.style.display = "block";
+  list.innerHTML = "";
+
+  try {
+    const flightDate = document.getElementById("outDate").value;
+    const destination = airportCodes.join(",");
+    const apiUrl = `https://flight.dock-yard.io/searchDayFlights?location=${departCode}&destination=${destination}&departDate=${flightDate}&fullResults=true`;
+    const response = await fetch(apiUrl);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const flights = await response.json();
+    renderFlightsOnPage(flights);
+  } catch (error) {
+    console.error("Flight lookup error:", error);
+    list.innerHTML = '<p style="text-align: center; color: #666;">Unable to load flights.</p>';
+  } finally {
+    loading.style.display = "none";
+  }
+}
+
+function renderFlightsOnPage(flights) {
+  const list = document.getElementById("flightList6");
+
+  if (!flights || flights.length === 0) {
+    list.innerHTML = '<p style="text-align: center; color: #666;">No flights found for this route and date.</p>';
+    return;
+  }
+
+  list.innerHTML = flights
+    .slice(0, 50)
+    .map((f) => {
+      const code = (f.flight && f.flight.code) || "";
+      const airline = (f.flight && f.flight.carrier && f.flight.carrier.name) || "";
+      const depTime = (f.departure && f.departure.time) || "";
+      const arrTime = (f.arrival && f.arrival.time) || "";
+      const depIata = (f.departure && f.departure.airport_iata) || "";
+      const arrIata = (f.arrival && f.arrival.airport_iata) || "";
+
+      return `
+        <div class="flight-card" onclick='selectFlightOnPage(${JSON.stringify(f).replace(/'/g, "&#39;")})'>
+          <div class="flight-code">${code}</div>
+          ${airline ? `<div class="flight-airline">${airline}</div>` : ""}
+          <div class="flight-times">${depIata} ${depTime} → ${arrIata} ${arrTime}</div>
+        </div>
+      `;
+    })
+    .join("");
+}
+
+function selectFlightOnPage(flightData) {
+  selectedFlight = flightData;
+  updateSummary();
+  showPage(7);
+}
+
+function skipFlight() {
+  selectedFlight = null;
+  selectedDestination = null;
+  updateSummary();
+  showPage(7);
+}
+
+function skipFromFlights() {
+  selectedFlight = null;
+  updateSummary();
+  showPage(7);
+}
+
+// Summary
+function updateSummary() {
+  const outDate = document.getElementById("outDate").value;
+  const outTime = document.getElementById("outTime").value;
+  const inDate = document.getElementById("inDate").value;
+  const inTime = document.getElementById("inTime").value;
+
+  const outDateFormatted = new Date(outDate).toLocaleDateString("en-GB", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric"
   });
+
+  const inDateFormatted = new Date(inDate).toLocaleDateString("en-GB", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric"
+  });
+
+  document.getElementById("summaryOutDate").textContent = `${outDateFormatted} at ${outTime}`;
+  document.getElementById("summaryInDate").textContent = `${inDateFormatted} at ${inTime}`;
+
+  const flightValue = document.getElementById("summaryFlight");
+
+  if (selectedFlight) {
+    const code = (selectedFlight.flight && selectedFlight.flight.code) || "";
+    const airline = (selectedFlight.flight && selectedFlight.flight.carrier && selectedFlight.flight.carrier.name) || "";
+    flightValue.textContent = airline ? `${code} (${airline})` : code;
+  } else {
+    flightValue.textContent = "Not selected";
+  }
 }
 
-// Launch Search
-function launchSearch() {
+// Submit search
+function submitSearch() {
+  const outDate = document.getElementById("outDate").value;
+  const outTime = document.getElementById("outTime").value;
+  const inDate = document.getElementById("inDate").value;
+  const inTime = document.getElementById("inTime").value;
+
+  if (!outDate || !inDate) {
+    alert("Please complete all required fields");
+    return;
+  }
+
+  // URL params
+  const urlParams = new URLSearchParams(window.location.search);
+  const agent = urlParams.get("agent") || "WY992";
+  const adcode = urlParams.get("adcode") || "";
+  const promotionCode = urlParams.get("promotionCode") || "";
+  const flightCode = selectedFlight ? ((selectedFlight.flight && selectedFlight.flight.code) || "default") : "default";
+
+  // Encode times
+  const outTimeEncoded = outTime.replace(":", "%3A");
+  const inTimeEncoded = inTime.replace(":", "%3A");
+
+  // Domain resolution (CHR stays on www)
   const host = window.location.host;
   const isLocal = host.startsWith("127") || host.includes("github.io");
   const basedomain = isLocal ? "www.holidayextras.com" : host;
 
-  const agent = "WY992";
-  const flight = "default";
+  // Build search URL
+  const searchUrl = `https://${basedomain}/static/?selectProduct=cp&#/categories?agent=${agent}&ppts=&customer_ref=&lang=en&adults=2&depart=${departCode}&terminal=&arrive=&flight=${flightCode}&in=${inDate}&out=${outDate}&park_from=${outTimeEncoded}&park_to=${inTimeEncoded}&filter_meetandgreet=&filter_parkandride=&children=0&infants=0&redirectReferal=carpark&from_categories=true&adcode=${adcode}&promotionCode=${promotionCode}`;
 
-  const searchUrl = `https://${basedomain}/static/?selectProduct=cp&#/categories?agent=${agent}&ppts=&customer_ref=&lang=en&adults=2&depart=${window.depart}&terminal=&arrive=&flight=${flight}&in=${state.inDate}&out=${state.outDate}&park_from=${state.outTime}&park_to=${state.inTime}&filter_meetandgreet=&filter_parkandride=&children=0&infants=0&redirectReferal=carpark&from_categories=true&adcode=&promotionCode=`;
-
-  // Add a fun countdown
-  const btn = document.getElementById('launchSearch');
-  let countdown = 3;
-  btn.textContent = `🚀 Launching in ${countdown}...`;
-  btn.disabled = true;
-
-  const interval = setInterval(() => {
-    countdown--;
-    if (countdown > 0) {
-      btn.textContent = `🚀 Launching in ${countdown}...`;
-    } else {
-      clearInterval(interval);
-      btn.textContent = '🎉 BLAST OFF!';
-      setTimeout(() => {
-        window.location.href = searchUrl;
-      }, 500);
-    }
-  }, 1000);
+  window.location.href = searchUrl;
 }

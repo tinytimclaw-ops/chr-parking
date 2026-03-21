@@ -12,129 +12,249 @@
   <script src="script.js" defer></script>
 </head>
 <body>
-  <!-- Crazy Surreal Banner -->
+  <header class="header">
+    <div class="container">
+      <div class="header-content">
+        <img id="brandLogo" src="" alt="" class="brand-logo">
+        <h1 id="brandName" class="brand-name"></h1>
+      </div>
+    </div>
+  </header>
+
   <div class="banner">
-    <img class="banner-img" src="assets/banner.jpg" alt="">
+    <img class="banner-img" src="assets/banner.jpg" alt="Luxury car on beach">
     <div class="banner-overlay">
       <div class="banner-text">
-        <span class="banner-badge">🚀 Time Travel Parking</span>
-        <h1 class="banner-headline" id="bannerHeadline">Park your car in the future!</h1>
+        <span class="banner-badge">Airport Parking</span>
+        <h2 class="banner-headline">Park with Confidence</h2>
       </div>
     </div>
   </div>
 
-  <!-- Main Container -->
-  <div class="container">
-    <!-- Logo -->
-    <div class="logo-container">
-      <img id="brandLogo" src="" alt="" class="brand-logo">
-    </div>
+  <main class="main-content">
+    <div class="container">
 
-    <!-- Crazy Interactive Search -->
-    <div class="crazy-search-container">
-      <h2 class="search-title">Let's play a game... 🎮</h2>
-      <p class="search-subtitle">Swipe, tap, drag, and chat your way to parking!</p>
-
-      <!-- Step 1: Swipe Cards for Dates -->
-      <div class="step-section active" id="step1">
-        <h3 class="step-title">👆 Swipe to pick your drop-off date</h3>
-        <div class="swipe-container">
-          <div class="swipe-cards" id="dateCards"></div>
-          <div class="swipe-actions">
-            <button class="swipe-btn swipe-left" id="swipeLeftBtn">👈 Earlier</button>
-            <button class="swipe-btn swipe-right" id="swipeRightBtn">Later 👉</button>
-          </div>
-          <div class="swipe-choice" id="dateChoice"></div>
+      <!-- Progress indicator -->
+      <div class="progress-bar">
+        <div class="progress-step" data-step="1">
+          <span class="step-number">1</span>
+        </div>
+        <div class="progress-step" data-step="2">
+          <span class="step-number">2</span>
+        </div>
+        <div class="progress-step" data-step="3">
+          <span class="step-number">3</span>
+        </div>
+        <div class="progress-step" data-step="4">
+          <span class="step-number">4</span>
+        </div>
+        <div class="progress-step" data-step="5">
+          <span class="step-number">5</span>
+        </div>
+        <div class="progress-step" data-step="6">
+          <span class="step-number">6</span>
+        </div>
+        <div class="progress-step" data-step="7">
+          <span class="step-number">7</span>
         </div>
       </div>
 
-      <!-- Step 2: Draggable Timeline for Time -->
-      <div class="step-section" id="step2">
-        <h3 class="step-title">⏰ Drag the rocket to your drop-off time!</h3>
-        <div class="timeline-container">
-          <div class="timeline-track">
-            <div class="timeline-labels">
-              <span>00:00</span>
-              <span>06:00</span>
-              <span>12:00</span>
-              <span>18:00</span>
-              <span>23:00</span>
+      <!-- Page 1: Drop-off Date -->
+      <div id="page1" class="page-panel active">
+        <div class="panel">
+          <h3 class="panel-title">When are you dropping off?</h3>
+          <p class="panel-subtitle">Select your drop-off date</p>
+
+          <div class="single-field">
+            <label for="outDate" class="form-label">Drop-off Date</label>
+            <input type="date" id="outDate" class="form-control large-input" required>
+          </div>
+
+          <div class="button-group">
+            <button type="button" class="btn btn-primary" onclick="nextPage(2)">Continue</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Page 2: Drop-off Time -->
+      <div id="page2" class="page-panel">
+        <div class="panel">
+          <h3 class="panel-title">What time?</h3>
+          <p class="panel-subtitle">Select your drop-off time</p>
+
+          <div class="single-field">
+            <label for="outTime" class="form-label">Drop-off Time</label>
+            <select id="outTime" class="form-control large-input">
+              <option value="00:00">00:00</option>
+              <option value="01:00">01:00</option>
+              <option value="02:00">02:00</option>
+              <option value="03:00">03:00</option>
+              <option value="04:00">04:00</option>
+              <option value="05:00">05:00</option>
+              <option value="06:00" selected>06:00</option>
+              <option value="07:00">07:00</option>
+              <option value="08:00">08:00</option>
+              <option value="09:00">09:00</option>
+              <option value="10:00">10:00</option>
+              <option value="11:00">11:00</option>
+              <option value="12:00">12:00</option>
+              <option value="13:00">13:00</option>
+              <option value="14:00">14:00</option>
+              <option value="15:00">15:00</option>
+              <option value="16:00">16:00</option>
+              <option value="17:00">17:00</option>
+              <option value="18:00">18:00</option>
+              <option value="19:00">19:00</option>
+              <option value="20:00">20:00</option>
+              <option value="21:00">21:00</option>
+              <option value="22:00">22:00</option>
+              <option value="23:00">23:00</option>
+            </select>
+          </div>
+
+          <div class="button-group">
+            <button type="button" class="btn btn-secondary" onclick="prevPage(1)">Back</button>
+            <button type="button" class="btn btn-primary" onclick="nextPage(3)">Continue</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Page 3: Collection Date -->
+      <div id="page3" class="page-panel">
+        <div class="panel">
+          <h3 class="panel-title">When are you collecting?</h3>
+          <p class="panel-subtitle">Select your collection date</p>
+
+          <div class="single-field">
+            <label for="inDate" class="form-label">Collection Date</label>
+            <input type="date" id="inDate" class="form-control large-input" required>
+          </div>
+
+          <div class="button-group">
+            <button type="button" class="btn btn-secondary" onclick="prevPage(2)">Back</button>
+            <button type="button" class="btn btn-primary" onclick="nextPage(4)">Continue</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Page 4: Collection Time -->
+      <div id="page4" class="page-panel">
+        <div class="panel">
+          <h3 class="panel-title">What time?</h3>
+          <p class="panel-subtitle">Select your collection time</p>
+
+          <div class="single-field">
+            <label for="inTime" class="form-label">Collection Time</label>
+            <select id="inTime" class="form-control large-input">
+              <option value="00:00">00:00</option>
+              <option value="01:00">01:00</option>
+              <option value="02:00">02:00</option>
+              <option value="03:00">03:00</option>
+              <option value="04:00">04:00</option>
+              <option value="05:00">05:00</option>
+              <option value="06:00">06:00</option>
+              <option value="07:00">07:00</option>
+              <option value="08:00">08:00</option>
+              <option value="09:00">09:00</option>
+              <option value="10:00">10:00</option>
+              <option value="11:00">11:00</option>
+              <option value="12:00" selected>12:00</option>
+              <option value="13:00">13:00</option>
+              <option value="14:00">14:00</option>
+              <option value="15:00">15:00</option>
+              <option value="16:00">16:00</option>
+              <option value="17:00">17:00</option>
+              <option value="18:00">18:00</option>
+              <option value="19:00">19:00</option>
+              <option value="20:00">20:00</option>
+              <option value="21:00">21:00</option>
+              <option value="22:00">22:00</option>
+              <option value="23:00">23:00</option>
+            </select>
+          </div>
+
+          <div class="button-group">
+            <button type="button" class="btn btn-secondary" onclick="prevPage(3)">Back</button>
+            <button type="button" class="btn btn-primary" onclick="nextPage(5)">Continue</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Page 5: Destination Selection -->
+      <div id="page5" class="page-panel">
+        <div class="panel">
+          <h3 class="panel-title">Where are you flying to?</h3>
+          <p class="panel-subtitle">Select your destination</p>
+
+          <div id="destinationLoading5" class="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>Loading destinations...</p>
+          </div>
+
+          <div id="destinationList5" class="destination-grid"></div>
+
+          <div class="button-group">
+            <button type="button" class="btn btn-secondary" onclick="prevPage(4)">Back</button>
+            <button type="button" class="btn btn-clear" onclick="skipFlight()">Skip Flight</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Page 6: Flight Selection -->
+      <div id="page6" class="page-panel">
+        <div class="panel">
+          <h3 class="panel-title">Select Your Flight</h3>
+          <p class="panel-subtitle" id="flightSubtitle6">Choose from available flights</p>
+
+          <div id="flightLoading6" class="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>Loading flights...</p>
+          </div>
+
+          <div id="flightList6" class="flight-list"></div>
+
+          <div class="button-group">
+            <button type="button" class="btn btn-secondary" onclick="prevPage(5)">Back</button>
+            <button type="button" class="btn btn-clear" onclick="skipFromFlights()">Skip Flight</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Page 7: Review and Submit -->
+      <div id="page7" class="page-panel">
+        <div class="panel">
+          <h3 class="panel-title">Review Your Booking</h3>
+          <p class="panel-subtitle">Check your details before searching</p>
+
+          <div class="summary-card">
+            <div class="summary-row">
+              <span class="summary-label">Drop-off:</span>
+              <span class="summary-value" id="summaryOutDate"></span>
             </div>
-            <div class="timeline-bar"></div>
-            <div class="timeline-thumb" id="outTimeThumb">🚀</div>
-          </div>
-          <div class="timeline-value" id="outTimeValue">06:00</div>
-        </div>
-        <button class="btn next-btn" id="confirmOutTime">Lock it in! 🔒</button>
-      </div>
-
-      <!-- Step 3: Return Date Cards -->
-      <div class="step-section" id="step3">
-        <h3 class="step-title">👆 Swipe for your return date</h3>
-        <div class="swipe-container">
-          <div class="swipe-cards" id="returnDateCards"></div>
-          <div class="swipe-actions">
-            <button class="swipe-btn swipe-left" id="returnSwipeLeftBtn">👈 Earlier</button>
-            <button class="swipe-btn swipe-right" id="returnSwipeRightBtn">Later 👉</button>
-          </div>
-          <div class="swipe-choice" id="returnDateChoice"></div>
-        </div>
-      </div>
-
-      <!-- Step 4: Return Time Slider -->
-      <div class="step-section" id="step4">
-        <h3 class="step-title">⏰ Drag for return time!</h3>
-        <div class="timeline-container">
-          <div class="timeline-track">
-            <div class="timeline-labels">
-              <span>00:00</span>
-              <span>06:00</span>
-              <span>12:00</span>
-              <span>18:00</span>
-              <span>23:00</span>
+            <div class="summary-row">
+              <span class="summary-label">Collection:</span>
+              <span class="summary-value" id="summaryInDate"></span>
             </div>
-            <div class="timeline-bar"></div>
-            <div class="timeline-thumb" id="inTimeThumb">🛸</div>
+            <div class="summary-row">
+              <span class="summary-label">Flight:</span>
+              <span class="summary-value" id="summaryFlight"></span>
+            </div>
           </div>
-          <div class="timeline-value" id="inTimeValue">12:00</div>
-        </div>
-        <button class="btn next-btn" id="confirmInTime">Perfect! ✨</button>
-      </div>
 
-      <!-- Step 5: Chatbot Style Confirmation -->
-      <div class="step-section" id="step5">
-        <h3 class="step-title">💬 Let's confirm your trip!</h3>
-        <div class="chat-container">
-          <div class="chat-message bot">
-            <div class="avatar">🤖</div>
-            <div class="message">Hi! I've got your parking sorted. Let me recap...</div>
-          </div>
-          <div class="chat-message bot" id="chatSummary">
-            <div class="avatar">📋</div>
-            <div class="message" id="summaryText"></div>
-          </div>
-          <div class="chat-message user">
-            <div class="avatar">👤</div>
-            <div class="message">Looks perfect!</div>
+          <div class="button-group">
+            <button type="button" class="btn btn-secondary" onclick="prevPage(6)">Back</button>
+            <button type="button" class="btn btn-primary" onclick="submitSearch()">Search Parking</button>
           </div>
         </div>
-        <button class="btn launch-btn" id="launchSearch">🚀 LAUNCH MY SEARCH!</button>
       </div>
-    </div>
 
-    <!-- Progress Dots -->
-    <div class="progress-dots">
-      <span class="dot active" data-step="1"></span>
-      <span class="dot" data-step="2"></span>
-      <span class="dot" data-step="3"></span>
-      <span class="dot" data-step="4"></span>
-      <span class="dot" data-step="5"></span>
     </div>
-  </div>
+  </main>
 
-  <!-- Footer -->
   <footer class="footer">
-    <p>&copy; 2026 <span id="footerBrand">Airport Parking</span>. All rights reserved.</p>
+    <div class="container">
+      <p class="footer-text">&copy; 2024 <span id="footerBrand"></span>. All rights reserved.</p>
+    </div>
   </footer>
 </body>
 </html>
